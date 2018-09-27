@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package travisci.images;
+option go_package = "images";
+
+service Images {
+  rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse);
+}
+
+message ListBuildsRequest {
+}
+
+message ListBuildsResponse {
+}
