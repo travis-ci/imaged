@@ -24,6 +24,11 @@ func main() {
 			Usage:  "URL for connecting to the PostgreSQL database",
 			EnvVar: "IMAGED_DATABASE_URL",
 		},
+		cli.StringFlag{
+			Name:   "bucket, b",
+			Usage:  "S3 bucket name for storing build records",
+			EnvVar: "IMAGED_RECORD_BUCKET",
+		},
 	}
 
 	app.Action = Run
@@ -37,7 +42,8 @@ func main() {
 // Run starts the imaged server listening for API requests.
 func Run(c *cli.Context) error {
 	dbURL := c.String("database")
-	server, err := imaged.NewServer(dbURL)
+	bucket := c.String("bucket")
+	server, err := imaged.NewServer(dbURL, bucket)
 	if err != nil {
 		return err
 	}

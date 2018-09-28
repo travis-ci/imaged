@@ -3,7 +3,7 @@ FROM golang:1.11 AS builder
 ADD https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 /usr/bin/dep
 RUN chmod +x /usr/bin/dep
 
-#RUN update-ca-certificates
+RUN update-ca-certificates
 
 WORKDIR $GOPATH/src/github.com/travis-ci/imaged
 COPY Gopkg.toml Gopkg.lock ./
@@ -14,5 +14,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o /imaged github.
 
 FROM scratch
 COPY --from=builder /imaged .
-#COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 ENTRYPOINT ["./imaged"]

@@ -5,6 +5,7 @@ services:
     build: .
     environment:
       IMAGED_DATABASE_URL: postgres://imaged:imaged@db/imaged?sslmode=disable
+    env_file: .env.dev
     ports:
     - 8080:8080
     networks:
