@@ -13,6 +13,18 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "imaged"
 	app.Description = "build Packer images at your request"
+	app.Flags = []cli.Flag{
+		cli.BoolTFlag{
+			Name:   "migrate",
+			Usage:  "run database migrations before starting the server",
+			EnvVar: "IMAGED_RUN_MIGRATIONS",
+		},
+		cli.StringFlag{
+			Name:   "database, d",
+			Usage:  "URL for connecting to the PostgreSQL database",
+			EnvVar: "IMAGED_DATABASE_URL",
+		},
+	}
 
 	app.Action = Run
 
@@ -24,7 +36,18 @@ func main() {
 
 // Run starts the imaged server listening for API requests.
 func Run(c *cli.Context) error {
-	server := &imaged.Server{}
+	dbURL := c.String("database")
+	server, err := imaged.NewServer(dbURL)
+	if err != nil {
+		return err
+	}
+
+	if c.Bool("migrate") {
+		if err = server.DB.Migrate(); err != nil {
+			return err
+		}
+	}
+
 	handler := rpc.NewImagesServer(server, nil)
 	return http.ListenAndServe(":8080", handler)
 }

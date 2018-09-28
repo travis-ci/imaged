@@ -52,6 +52,7 @@ func (m *ListBuildsRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_ListBuildsRequest proto.InternalMessageInfo
 
 type ListBuildsResponse struct {
+	Builds               []*Build `protobuf:"bytes,1,rep,name=builds,proto3" json:"builds,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -82,22 +83,184 @@ func (m *ListBuildsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ListBuildsResponse proto.InternalMessageInfo
 
+func (m *ListBuildsResponse) GetBuilds() []*Build {
+	if m != nil {
+		return m.Builds
+	}
+	return nil
+}
+
+type StartBuildRequest struct {
+	// The name of the Packer template that should be built.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The Git revision of the Packer templates repo that should be checked out for the build.
+	Revision             string   `protobuf:"bytes,2,opt,name=revision,proto3" json:"revision,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StartBuildRequest) Reset()         { *m = StartBuildRequest{} }
+func (m *StartBuildRequest) String() string { return proto.CompactTextString(m) }
+func (*StartBuildRequest) ProtoMessage()    {}
+func (*StartBuildRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03e4ae55c7c0e319, []int{2}
+}
+
+func (m *StartBuildRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StartBuildRequest.Unmarshal(m, b)
+}
+func (m *StartBuildRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StartBuildRequest.Marshal(b, m, deterministic)
+}
+func (m *StartBuildRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StartBuildRequest.Merge(m, src)
+}
+func (m *StartBuildRequest) XXX_Size() int {
+	return xxx_messageInfo_StartBuildRequest.Size(m)
+}
+func (m *StartBuildRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StartBuildRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StartBuildRequest proto.InternalMessageInfo
+
+func (m *StartBuildRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *StartBuildRequest) GetRevision() string {
+	if m != nil {
+		return m.Revision
+	}
+	return ""
+}
+
+type StartBuildResponse struct {
+	// The build that was created.
+	Build                *Build   `protobuf:"bytes,1,opt,name=build,proto3" json:"build,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StartBuildResponse) Reset()         { *m = StartBuildResponse{} }
+func (m *StartBuildResponse) String() string { return proto.CompactTextString(m) }
+func (*StartBuildResponse) ProtoMessage()    {}
+func (*StartBuildResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03e4ae55c7c0e319, []int{3}
+}
+
+func (m *StartBuildResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StartBuildResponse.Unmarshal(m, b)
+}
+func (m *StartBuildResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StartBuildResponse.Marshal(b, m, deterministic)
+}
+func (m *StartBuildResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StartBuildResponse.Merge(m, src)
+}
+func (m *StartBuildResponse) XXX_Size() int {
+	return xxx_messageInfo_StartBuildResponse.Size(m)
+}
+func (m *StartBuildResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_StartBuildResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StartBuildResponse proto.InternalMessageInfo
+
+func (m *StartBuildResponse) GetBuild() *Build {
+	if m != nil {
+		return m.Build
+	}
+	return nil
+}
+
+type Build struct {
+	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Revision             string   `protobuf:"bytes,3,opt,name=revision,proto3" json:"revision,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Build) Reset()         { *m = Build{} }
+func (m *Build) String() string { return proto.CompactTextString(m) }
+func (*Build) ProtoMessage()    {}
+func (*Build) Descriptor() ([]byte, []int) {
+	return fileDescriptor_03e4ae55c7c0e319, []int{4}
+}
+
+func (m *Build) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Build.Unmarshal(m, b)
+}
+func (m *Build) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Build.Marshal(b, m, deterministic)
+}
+func (m *Build) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Build.Merge(m, src)
+}
+func (m *Build) XXX_Size() int {
+	return xxx_messageInfo_Build.Size(m)
+}
+func (m *Build) XXX_DiscardUnknown() {
+	xxx_messageInfo_Build.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Build proto.InternalMessageInfo
+
+func (m *Build) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *Build) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Build) GetRevision() string {
+	if m != nil {
+		return m.Revision
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*ListBuildsRequest)(nil), "travisci.images.ListBuildsRequest")
 	proto.RegisterType((*ListBuildsResponse)(nil), "travisci.images.ListBuildsResponse")
+	proto.RegisterType((*StartBuildRequest)(nil), "travisci.images.StartBuildRequest")
+	proto.RegisterType((*StartBuildResponse)(nil), "travisci.images.StartBuildResponse")
+	proto.RegisterType((*Build)(nil), "travisci.images.Build")
 }
 
 func init() { proto.RegisterFile("rpc/images/service.proto", fileDescriptor_03e4ae55c7c0e319) }
 
 var fileDescriptor_03e4ae55c7c0e319 = []byte{
-	// 135 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x28, 0x2a, 0x48, 0xd6,
-	0xcf, 0xcc, 0x4d, 0x4c, 0x4f, 0x2d, 0xd6, 0x2f, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0xd5, 0x2b,
-	0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2f, 0x29, 0x4a, 0x2c, 0xcb, 0x2c, 0x4e, 0xce, 0xd4, 0x83,
-	0x48, 0x2b, 0x09, 0x73, 0x09, 0xfa, 0x64, 0x16, 0x97, 0x38, 0x95, 0x66, 0xe6, 0xa4, 0x14, 0x07,
-	0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x28, 0x89, 0x70, 0x09, 0x21, 0x0b, 0x16, 0x17, 0xe4, 0xe7,
-	0x15, 0xa7, 0x1a, 0xc5, 0x73, 0xb1, 0x79, 0x82, 0x35, 0x09, 0x85, 0x72, 0x71, 0x21, 0xe4, 0x85,
-	0x94, 0xf4, 0xd0, 0x0c, 0xd5, 0xc3, 0x30, 0x51, 0x4a, 0x19, 0xaf, 0x1a, 0x88, 0x05, 0x4e, 0x1c,
-	0x51, 0x6c, 0x10, 0xc9, 0x24, 0x36, 0xb0, 0x6b, 0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0xdf,
-	0x30, 0x75, 0x27, 0xc9, 0x00, 0x00, 0x00,
+	// 262 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x92, 0xcf, 0x4a, 0xc3, 0x40,
+	0x10, 0xc6, 0x49, 0x62, 0x43, 0x1d, 0x41, 0xe9, 0x08, 0x12, 0x7a, 0x2a, 0xeb, 0xa5, 0x07, 0xd9,
+	0x42, 0x7d, 0x83, 0x28, 0x88, 0xe0, 0x29, 0xd2, 0x8b, 0xb7, 0x34, 0x5d, 0x64, 0xc0, 0x26, 0x71,
+	0x67, 0x9b, 0x47, 0xf3, 0xf9, 0x84, 0xd9, 0xd0, 0x56, 0xb7, 0xe9, 0x6d, 0xe7, 0xdf, 0x6f, 0xbe,
+	0xf9, 0x58, 0xc8, 0x6c, 0x5b, 0x2d, 0x68, 0x5b, 0x7e, 0x1a, 0x5e, 0xb0, 0xb1, 0x1d, 0x55, 0x46,
+	0xb7, 0xb6, 0x71, 0x0d, 0xde, 0x38, 0x5b, 0x76, 0xc4, 0x15, 0x69, 0x5f, 0x56, 0xb7, 0x30, 0x79,
+	0x23, 0x76, 0xf9, 0x8e, 0xbe, 0x36, 0x5c, 0x98, 0xef, 0x9d, 0x61, 0xa7, 0x9e, 0x01, 0x8f, 0x93,
+	0xdc, 0x36, 0x35, 0x1b, 0xd4, 0x90, 0xae, 0x25, 0x93, 0x45, 0xb3, 0x64, 0x7e, 0xb5, 0xbc, 0xd3,
+	0xff, 0x60, 0x5a, 0x06, 0x8a, 0xbe, 0x4b, 0x3d, 0xc1, 0xe4, 0xdd, 0x95, 0xd6, 0x63, 0x7a, 0x34,
+	0x22, 0x5c, 0xd4, 0xe5, 0xd6, 0x64, 0xd1, 0x2c, 0x9a, 0x5f, 0x16, 0xf2, 0xc6, 0x29, 0x8c, 0xad,
+	0xe9, 0x88, 0xa9, 0xa9, 0xb3, 0x58, 0xf2, 0xfb, 0x58, 0xe5, 0x80, 0xc7, 0x90, 0x5e, 0xca, 0x03,
+	0x8c, 0x64, 0x89, 0x60, 0x86, 0x95, 0xf8, 0x26, 0xf5, 0x02, 0x23, 0x89, 0xf1, 0x1a, 0x62, 0xf2,
+	0x33, 0x49, 0x11, 0xd3, 0x66, 0x2f, 0x26, 0x1e, 0x10, 0x93, 0xfc, 0x15, 0xb3, 0xfc, 0x89, 0x20,
+	0x7d, 0x95, 0x05, 0xb8, 0x02, 0x38, 0x58, 0x84, 0x2a, 0x10, 0x10, 0x98, 0x3a, 0xbd, 0x3f, 0xdb,
+	0xd3, 0x1f, 0xb6, 0x02, 0x38, 0x9c, 0x7b, 0x02, 0x1b, 0x18, 0x7a, 0x02, 0x1b, 0xfa, 0x95, 0x8f,
+	0x3f, 0x52, 0x5f, 0x5c, 0xa7, 0xf2, 0x0f, 0x1e, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xed, 0x32,
+	0x0f, 0x70, 0x23, 0x02, 0x00, 0x00,
 }

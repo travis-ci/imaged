@@ -5,10 +5,30 @@ option go_package = "images";
 
 service Images {
   rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse);
+  rpc StartBuild(StartBuildRequest) returns (StartBuildResponse);
 }
 
 message ListBuildsRequest {
 }
 
 message ListBuildsResponse {
+  repeated Build  builds  = 1;
+}
+
+message StartBuildRequest {
+  // The name of the Packer template that should be built.
+  string  name      = 1;
+  // The Git revision of the Packer templates repo that should be checked out for the build.
+  string  revision  = 2;
+}
+
+message StartBuildResponse {
+  // The build that was created.
+  Build  build  = 1;
+}
+
+message Build {
+  int64   id        = 1;
+  string  name      = 2;
+  string  revision  = 3;
 }

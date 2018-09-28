@@ -1,0 +1,26 @@
+# Brings up a version of imaged for development
+version: "3"
+services:
+  imaged:
+    build: .
+    environment:
+      IMAGED_DATABASE_URL: postgres://imaged:imaged@db/imaged?sslmode=disable
+    ports:
+    - 8080:8080
+    networks:
+    - imaged
+    depends_on:
+    - db
+  db:
+    image: postgres:10
+    environment:
+      POSTGRES_USER: imaged
+      POSTGRES_PASSWORD: imaged
+    networks:
+    - imaged
+    volumes:
+    - "pgdata:/var/lib/postgresql/data"
+networks:
+  imaged:
+volumes:
+  pgdata:
