@@ -8,6 +8,7 @@ service Images {
   rpc StartBuild(StartBuildRequest) returns (StartBuildResponse);
 
   rpc DownloadRecord(DownloadRecordRequest) returns (DownloadRecordResponse);
+  rpc GetRecordURL(GetRecordURLRequest) returns (GetRecordURLResponse);
   rpc AttachRecord(AttachRecordRequest) returns (AttachRecordResponse);
 }
 
@@ -38,6 +39,16 @@ message DownloadRecordRequest {
 message DownloadRecordResponse {
   // The contents of the record.
   bytes  contents  = 1;
+}
+
+message GetRecordURLRequest {
+  // The ID of the record to get a download URL for.
+  int64  id  = 1;
+}
+
+message GetRecordURLResponse {
+  // The public S3 URL for the build record.
+  string  url  = 1;
 }
 
 message AttachRecordRequest {

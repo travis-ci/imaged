@@ -7,10 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"time"
 )
 
 // Storage provides an interface for uploading and downloading files.
 type Storage struct {
+	svc        *s3.S3
 	uploader   *s3manager.Uploader
 	downloader *s3manager.Downloader
 
@@ -27,6 +29,7 @@ func NewStorage(bucket string) (*Storage, error) {
 	}
 
 	return &Storage{
+		svc:        s3.New(sess),
 		uploader:   s3manager.NewUploader(sess),
 		downloader: s3manager.NewDownloader(sess),
 		Bucket:     bucket,
@@ -60,4 +63,14 @@ func (s *Storage) DownloadBytes(ctx context.Context, key string) ([]byte, error)
 		return nil, err
 	}
 	return buffer.Bytes(), nil
+}
+
+// PublicURL generates a publicly-accessible URL for a file stored in S3.
+func (s *Storage) PublicURL(ctx context.Context, key string) (string, error) {
+	input := &s3.GetObjectInput{
+		Bucket: &s.Bucket,
+		Key:    &key,
+	}
+	req, _ := s.svc.GetObjectRequest(input)
+	return req.Presign(time.Hour)
 }

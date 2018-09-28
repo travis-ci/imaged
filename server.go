@@ -78,6 +78,25 @@ func (s *Server) DownloadRecord(ctx context.Context, req *pb.DownloadRecordReque
 	return resp, nil
 }
 
+// GetRecordURL creates a temporary public URL for downloading the build record.
+func (s *Server) GetRecordURL(ctx context.Context, req *pb.GetRecordURLRequest) (*pb.GetRecordURLResponse, error) {
+	r, err := s.DB.GetRecord(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	url, err := s.Storage.PublicURL(ctx, r.S3Key)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &pb.GetRecordURLResponse{
+		Url: url,
+	}
+
+	return resp, nil
+}
+
 // AttachRecord creates a new build record based on a file that was generated during the build.
 //
 // Generally, this won't need to be used, as imaged should upload records itself after a build runs. This API method is for backfilling records.
