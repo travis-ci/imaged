@@ -3,10 +3,8 @@ package worker
 import (
 	"context"
 	"github.com/pkg/errors"
-	"github.com/travis-ci/imaged"
 	"log"
 	"os"
-	"os/exec"
 )
 
 // Worker waits for and runs a single Packer build at a time.
@@ -66,26 +64,4 @@ func (w *Worker) Run() {
 			log.Printf("Error running job: %v", err)
 		}
 	}
-}
-
-// Job describes a Packer build that the worker needs to run.
-type Job struct {
-	Build *imaged.Build
-
-	worker *Worker
-}
-
-// Execute runs a single job.
-func (j *Job) Execute(ctx context.Context) error {
-	log.Printf("Build %d: building template '%s' at revision '%s'", j.Build.ID, j.Build.Name, j.Build.Revision)
-	log.Println("Running packer version")
-
-	cmd := exec.CommandContext(ctx, j.worker.config.Packer, "version")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "could not print Packer version")
-	}
-
-	return nil
 }
