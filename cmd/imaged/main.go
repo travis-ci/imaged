@@ -32,9 +32,15 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "templates-path",
-			Usage:  "Local path where Packer templates Git repo should be checked out",
+			Usage:  "local path where Packer templates Git repo should be checked out",
 			EnvVar: "IMAGED_TEMPLATES_PATH",
 			Value:  "/templates",
+		},
+		cli.StringFlag{
+			Name:   "packer",
+			Usage:  "path to the Packer executable",
+			EnvVar: "IMAGED_PACKER_PATH",
+			Value:  "/bin/packer",
 		},
 	}
 
@@ -50,6 +56,7 @@ func main() {
 func Run(c *cli.Context) error {
 	worker, err := worker.New(worker.Config{
 		TemplatesPath: c.String("templates-path"),
+		Packer:        c.String("packer"),
 	})
 	if err != nil {
 		return err

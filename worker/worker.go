@@ -1,10 +1,12 @@
 package worker
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"github.com/travis-ci/imaged"
 	"log"
 	"os"
+	"os/exec"
 )
 
 // Worker waits for and runs a single Packer build at a time.
@@ -19,6 +21,8 @@ type Config struct {
 	TemplatesPath string
 	// TemplatesURL is the URL where the Packer templates should be cloned from.
 	TemplatesURL string
+	// Packer is the path to the Packer executable.
+	Packer string
 }
 
 // New creates a new worker ready to run jobs.
@@ -41,6 +45,8 @@ func New(c Config) (*Worker, error) {
 //
 // Returns an error if a job is already running on the worker.
 func (w *Worker) Send(j Job) error {
+	j.worker = w
+
 	select {
 	case w.jobs <- j:
 		return nil
@@ -54,7 +60,9 @@ func (w *Worker) Send(j Job) error {
 // It should be called in a goroutine.
 func (w *Worker) Run() {
 	for j := range w.jobs {
-		if err := j.Execute(); err != nil {
+		ctx := context.Background()
+
+		if err := j.Execute(ctx); err != nil {
 			log.Printf("Error running job: %v", err)
 		}
 	}
@@ -68,7 +76,16 @@ type Job struct {
 }
 
 // Execute runs a single job.
-func (j *Job) Execute() error {
+func (j *Job) Execute(ctx context.Context) error {
 	log.Printf("Build %d: building template '%s' at revision '%s'", j.Build.ID, j.Build.Name, j.Build.Revision)
+	log.Println("Running packer version")
+
+	cmd := exec.CommandContext(ctx, j.worker.config.Packer, "version")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return errors.Wrap(err, "could not print Packer version")
+	}
+
 	return nil
 }
