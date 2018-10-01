@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/travis-ci/imaged"
 	rpc "github.com/travis-ci/imaged/rpc/images"
+	"github.com/travis-ci/imaged/server"
+	"github.com/travis-ci/imaged/worker"
 	"github.com/urfave/cli"
 	"log"
 	"net/http"
@@ -29,6 +30,12 @@ func main() {
 			Usage:  "S3 bucket name for storing build records",
 			EnvVar: "IMAGED_RECORD_BUCKET",
 		},
+		cli.StringFlag{
+			Name:   "templates-path",
+			Usage:  "Local path where Packer templates Git repo should be checked out",
+			EnvVar: "IMAGED_TEMPLATES_PATH",
+			Value:  "/templates",
+		},
 	}
 
 	app.Action = Run
@@ -41,9 +48,20 @@ func main() {
 
 // Run starts the imaged server listening for API requests.
 func Run(c *cli.Context) error {
-	dbURL := c.String("database")
-	bucket := c.String("bucket")
-	server, err := imaged.NewServer(dbURL, bucket)
+	worker, err := worker.New(worker.Config{
+		TemplatesPath: c.String("templates-path"),
+	})
+	if err != nil {
+		return err
+	}
+
+	go worker.Run()
+
+	server, err := server.New(server.Config{
+		DatabaseURL:  c.String("database"),
+		RecordBucket: c.String("bucket"),
+		Worker:       worker,
+	})
 	if err != nil {
 		return err
 	}

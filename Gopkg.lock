@@ -101,6 +101,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   digest = "1:bc5f818bb50c42b55721ab0ea9af6c28cad7d9e31db43eaa78d2ca487c9897ac"
   name = "github.com/twitchtv/twirp"
   packages = [
@@ -133,6 +141,7 @@
     "github.com/golang/protobuf/proto",
     "github.com/jmoiron/sqlx",
     "github.com/lib/pq",
+    "github.com/pkg/errors",
     "github.com/twitchtv/twirp",
     "github.com/twitchtv/twirp/ctxsetters",
     "github.com/urfave/cli",

@@ -1,25 +1,35 @@
-package imaged
+package server
 
 import (
 	"context"
+	"github.com/travis-ci/imaged"
 	pb "github.com/travis-ci/imaged/rpc/images"
+	"github.com/travis-ci/imaged/worker"
 	"github.com/twitchtv/twirp"
 )
 
 // Server handles API requests for imaged.
 type Server struct {
-	DB      *DBConn
-	Storage *Storage
+	DB      *imaged.DBConn
+	Storage *imaged.Storage
+	Worker  *worker.Worker
 }
 
-// NewServer creates a new handler for API requests.
-func NewServer(databaseURL string, recordBucket string) (*Server, error) {
-	db, err := NewDBConn(databaseURL)
+// Config contains options for configuring a new server.
+type Config struct {
+	DatabaseURL  string
+	RecordBucket string
+	Worker       *worker.Worker
+}
+
+// New creates a new handler for API requests.
+func New(c Config) (*Server, error) {
+	db, err := imaged.NewDBConn(c.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	storage, err := NewStorage(recordBucket)
+	storage, err := imaged.NewStorage(c.RecordBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -27,6 +37,7 @@ func NewServer(databaseURL string, recordBucket string) (*Server, error) {
 	return &Server{
 		DB:      db,
 		Storage: storage,
+		Worker:  c.Worker,
 	}, nil
 }
 
@@ -51,6 +62,8 @@ func (s *Server) StartBuild(ctx context.Context, req *pb.StartBuildRequest) (*pb
 	if err != nil {
 		return nil, err
 	}
+
+	s.Worker.Send(worker.Job{Build: build})
 
 	resp := &pb.StartBuildResponse{
 		Build: build.Message(),
