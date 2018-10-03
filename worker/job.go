@@ -60,7 +60,7 @@ func (j *Job) Execute(ctx context.Context) error {
 		return err
 	}
 
-	cmd = exec.CommandContext(ctx, j.packer(), "build", template)
+	cmd = exec.CommandContext(ctx, j.packer(), "build", "-color=false", template)
 	cmd.Stdout = logWriter
 	cmd.Stderr = logWriter
 	cmd.Dir = j.templatesDir()
