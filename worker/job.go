@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/travis-ci/imaged/db"
 	"github.com/travis-ci/imaged/storage"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,6 +29,13 @@ type Job struct {
 // Execute runs a single job.
 func (j *Job) Execute(ctx context.Context) error {
 	log.Printf("Build %d: building template '%s' at revision '%s'", j.Build.ID, j.Build.Name, j.Build.Revision)
+
+	rev, err := j.resetRepository(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Build %d: checked out revision %s", j.Build.ID, rev)
 
 	dir, err := ioutil.TempDir("", "imaged-build")
 	if err != nil {
@@ -52,8 +61,6 @@ func (j *Job) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "could not print Packer version")
 	}
 	logWriter.Flush()
-
-	// TODO: ensure the templates are at the right revision and in a clean state
 
 	template, err := j.convertTemplateToJSON()
 	if err != nil {
@@ -95,6 +102,10 @@ func (j *Job) db() *db.Connection {
 	return j.worker.config.DB
 }
 
+func (j *Job) repo() *git.Repository {
+	return j.worker.repo
+}
+
 func (j *Job) packer() string {
 	return j.worker.config.Packer
 }
@@ -105,6 +116,42 @@ func (j *Job) templatesDir() string {
 
 func (j *Job) outputFile(name string) string {
 	return filepath.Join(j.outputDir, name)
+}
+
+func (j *Job) resetRepository(ctx context.Context) (string, error) {
+	// Fetch any new commits since the process started
+	if err := j.worker.updateTemplates(); err != nil {
+		return "", err
+	}
+
+	// We need to resolve the reference they gave us
+	rev := "origin/" + j.Build.Revision
+	h, err := j.repo().ResolveRevision(plumbing.Revision(rev))
+	if err != nil {
+		if err == plumbing.ErrReferenceNotFound {
+			h, err = j.repo().ResolveRevision(plumbing.Revision(j.Build.Revision))
+		}
+
+		if err != nil {
+			return "", errors.Wrap(err, "could not resolve reference in templates repo")
+		}
+	}
+
+	// Check out the resolved revision, discarding any local changes
+	w, err := j.repo().Worktree()
+	if err != nil {
+		return "", errors.Wrap(err, "could not get worktree for templates repo")
+	}
+	err = w.Checkout(&git.CheckoutOptions{
+		Hash:  *h,
+		Force: true,
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "could not checkout templates revision")
+	}
+
+	rev = h.String()
+	return rev, nil
 }
 
 func (j *Job) convertTemplateToJSON() (string, error) {
