@@ -3,6 +3,8 @@ package worker
 import (
 	"context"
 	"github.com/pkg/errors"
+	"github.com/travis-ci/imaged/db"
+	"github.com/travis-ci/imaged/storage"
 	"gopkg.in/src-d/go-git.v4"
 	"log"
 )
@@ -22,6 +24,10 @@ type Config struct {
 	TemplatesURL string
 	// Packer is the path to the Packer executable.
 	Packer string
+	// DB is the database connection jobs should use.
+	DB *db.Connection
+	// Storage is the storage jobs should use to upload records.
+	Storage *storage.Storage
 }
 
 // New creates a new worker ready to run jobs.

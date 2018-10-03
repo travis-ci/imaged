@@ -16,32 +16,6 @@ type Server struct {
 	Worker  *worker.Worker
 }
 
-// Config contains options for configuring a new server.
-type Config struct {
-	DatabaseURL  string
-	RecordBucket string
-	Worker       *worker.Worker
-}
-
-// New creates a new handler for API requests.
-func New(c Config) (*Server, error) {
-	db, err := db.NewConnection(c.DatabaseURL)
-	if err != nil {
-		return nil, err
-	}
-
-	storage, err := storage.New(c.RecordBucket)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Server{
-		DB:      db,
-		Storage: storage,
-		Worker:  c.Worker,
-	}, nil
-}
-
 // ListBuilds provides a list of recent builds that imaged has run.
 func (s *Server) ListBuilds(ctx context.Context, req *pb.ListBuildsRequest) (*pb.ListBuildsResponse, error) {
 	builds, err := s.DB.RecentBuilds(ctx)

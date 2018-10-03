@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/pkg/errors"
+	"io"
 	"time"
 )
 
@@ -23,6 +25,10 @@ type Storage struct {
 //
 // The AWS credentials will be pulled from the environment.
 func New(bucket string) (*Storage, error) {
+	if bucket == "" {
+		return nil, errors.New("a bucket is required to create a storage")
+	}
+
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, err
@@ -36,19 +42,24 @@ func New(bucket string) (*Storage, error) {
 	}, nil
 }
 
-// UploadBytes uploads a byte array to S3.
-func (s *Storage) UploadBytes(ctx context.Context, key string, b []byte) (string, error) {
-	reader := bytes.NewReader(b)
+// Upload uploads data from a reader to S3.
+func (s *Storage) Upload(ctx context.Context, key string, r io.Reader) (string, error) {
 	input := &s3manager.UploadInput{
 		Bucket: &s.Bucket,
 		Key:    &key,
-		Body:   reader,
+		Body:   r,
 	}
 	result, err := s.uploader.UploadWithContext(ctx, input)
 	if err != nil {
 		return "", err
 	}
 	return result.Location, nil
+}
+
+// UploadBytes uploads a byte array to S3.
+func (s *Storage) UploadBytes(ctx context.Context, key string, b []byte) (string, error) {
+	reader := bytes.NewReader(b)
+	return s.Upload(ctx, key, reader)
 }
 
 // DownloadBytes downloads a byte array from S3.

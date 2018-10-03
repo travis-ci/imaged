@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/travis-ci/imaged/db"
 	rpc "github.com/travis-ci/imaged/rpc/images"
 	"github.com/travis-ci/imaged/server"
+	"github.com/travis-ci/imaged/storage"
 	"github.com/travis-ci/imaged/worker"
 	"github.com/urfave/cli"
 	"log"
@@ -59,10 +61,22 @@ func main() {
 
 // Run starts the imaged server listening for API requests.
 func Run(c *cli.Context) error {
+	db, err := db.NewConnection(c.String("database"))
+	if err != nil {
+		return err
+	}
+
+	storage, err := storage.New(c.String("bucket"))
+	if err != nil {
+		return err
+	}
+
 	worker, err := worker.New(worker.Config{
 		TemplatesPath: c.String("templates-path"),
 		TemplatesURL:  c.String("templates-url"),
 		Packer:        c.String("packer"),
+		DB:            db,
+		Storage:       storage,
 	})
 	if err != nil {
 		return err
@@ -70,17 +84,14 @@ func Run(c *cli.Context) error {
 
 	go worker.Run()
 
-	server, err := server.New(server.Config{
-		DatabaseURL:  c.String("database"),
-		RecordBucket: c.String("bucket"),
-		Worker:       worker,
-	})
-	if err != nil {
-		return err
+	server := &server.Server{
+		DB:      db,
+		Storage: storage,
+		Worker:  worker,
 	}
 
 	if c.Bool("migrate") {
-		if err = server.DB.Migrate(); err != nil {
+		if err = db.Migrate(); err != nil {
 			return err
 		}
 	}

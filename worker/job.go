@@ -7,6 +7,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"github.com/travis-ci/imaged/db"
+	"github.com/travis-ci/imaged/storage"
 	"io/ioutil"
 	"log"
 	"os"
@@ -73,12 +74,25 @@ func (j *Job) Execute(ctx context.Context) error {
 	logWriter.Flush()
 	logFile.Sync()
 
-	// TODO: replace this with attaching the log as a record
-	logContents, err := ioutil.ReadFile(logFile.Name())
-	os.Stdout.Write(logContents)
+	logRead, err := os.Open(logFile.Name())
+	if err != nil {
+		return errors.Wrap(err, "could not open log file for reading")
+	}
+	defer logRead.Close()
+
+	j.createRecord(ctx, logRead)
+
 	log.Printf("Build %d completed", j.Build.ID)
 
 	return nil
+}
+
+func (j *Job) storage() *storage.Storage {
+	return j.worker.config.Storage
+}
+
+func (j *Job) db() *db.Connection {
+	return j.worker.config.DB
 }
 
 func (j *Job) packer() string {
@@ -112,4 +126,19 @@ func (j *Job) convertTemplateToJSON() (string, error) {
 	}
 
 	return jsonPath, nil
+}
+
+func (j *Job) createRecord(ctx context.Context, f *os.File) (*db.Record, error) {
+	name := filepath.Base(f.Name())
+	key := j.Build.RecordKey(name)
+	if _, err := j.storage().Upload(ctx, key, f); err != nil {
+		return nil, errors.Wrap(err, "could not upload file to S3")
+	}
+
+	record, err := j.db().CreateRecord(ctx, j.Build, name, key)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create record for uploaded file")
+	}
+
+	return record, nil
 }
