@@ -63,9 +63,21 @@ message AttachRecordResponse {
 }
 
 message Build {
-  int64   id        = 1;
-  string  name      = 2;
-  string  revision  = 3;
+  enum Status {
+    CREATED    = 0;
+    STARTED    = 1;
+    SUCCEEDED  = 2;
+    FAILED     = 3;
+  }
+
+  int64   id             = 1;
+  string  name           = 2;
+  string  revision       = 3;
+  string  full_revision  = 4;
+  Status  status         = 5;
+  int64   created_at     = 6;
+  int64   started_at     = 7;
+  int64   finished_at    = 8;
 }
 
 message Record {

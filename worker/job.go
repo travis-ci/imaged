@@ -29,6 +29,11 @@ type Job struct {
 // Execute runs a single job.
 func (j *Job) Execute(ctx context.Context) error {
 	log.Printf("Build %d: building template '%s' at revision '%s'", j.Build.ID, j.Build.Name, j.Build.Revision)
+	j.db().StartBuild(ctx, j.Build)
+
+	// Assume the build fails unless we get to the end and mark it successful
+	j.Build.Status = db.BuildStatusFailed
+	defer j.db().FinishBuild(ctx, j.Build)
 
 	rev, err := j.resetRepository(ctx)
 	if err != nil {
@@ -36,6 +41,8 @@ func (j *Job) Execute(ctx context.Context) error {
 	}
 
 	log.Printf("Build %d: checked out revision %s", j.Build.ID, rev)
+	j.Build.FullRevision = &rev
+	j.db().UpdateBuild(ctx, j.Build)
 
 	dir, err := ioutil.TempDir("", "imaged-build")
 	if err != nil {
@@ -89,6 +96,7 @@ func (j *Job) Execute(ctx context.Context) error {
 
 	j.createRecord(ctx, logRead)
 
+	j.Build.Status = db.BuildStatusSucceeded
 	log.Printf("Build %d completed", j.Build.ID)
 
 	return nil

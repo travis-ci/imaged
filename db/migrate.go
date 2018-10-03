@@ -29,6 +29,20 @@ var migrations = []darwin.Migration{
 			)
 		`,
 	},
+	{
+		Version:     3,
+		Description: "Adding build status and other fields",
+		Script: `
+			CREATE TYPE build_status AS ENUM
+				('created','started','succeeded','failed');
+			ALTER TABLE builds
+				ADD COLUMN status build_status NOT NULL DEFAULT 'created',
+				ADD COLUMN full_revision text,
+				ADD COLUMN created_at timestamp without time zone NOT NULL DEFAULT now(),
+				ADD COLUMN started_at timestamp without time zone,
+				ADD COLUMN finished_at timestamp without time zone;
+		`,
+	},
 }
 
 // Migrate runs any necessary migrations against the database.
