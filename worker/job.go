@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	"github.com/travis-ci/imaged"
+	"github.com/travis-ci/imaged/db"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,7 +16,7 @@ import (
 
 // Job describes a Packer build that the worker needs to run.
 type Job struct {
-	Build *imaged.Build
+	Build *db.Build
 
 	worker    *Worker
 	log       *os.File

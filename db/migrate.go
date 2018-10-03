@@ -1,4 +1,4 @@
-package imaged
+package db
 
 import (
 	"github.com/GuiaBolso/darwin"
@@ -34,7 +34,7 @@ var migrations = []darwin.Migration{
 // Migrate runs any necessary migrations against the database.
 //
 // This will usually run when imaged is started so that the database is in a consistent state.
-func (db *DBConn) Migrate() error {
+func (db *Connection) Migrate() error {
 	driver := darwin.NewGenericDriver(db.DB.DB, darwin.PostgresDialect{})
 	d := darwin.New(driver, migrations, nil)
 	return d.Migrate()

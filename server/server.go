@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"github.com/travis-ci/imaged"
+	"github.com/travis-ci/imaged/db"
 	pb "github.com/travis-ci/imaged/rpc/images"
 	"github.com/travis-ci/imaged/worker"
 	"github.com/twitchtv/twirp"
@@ -10,7 +11,7 @@ import (
 
 // Server handles API requests for imaged.
 type Server struct {
-	DB      *imaged.DBConn
+	DB      *db.Connection
 	Storage *imaged.Storage
 	Worker  *worker.Worker
 }
@@ -24,7 +25,7 @@ type Config struct {
 
 // New creates a new handler for API requests.
 func New(c Config) (*Server, error) {
-	db, err := imaged.NewDBConn(c.DatabaseURL)
+	db, err := db.NewConnection(c.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
