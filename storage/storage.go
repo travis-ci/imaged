@@ -1,4 +1,4 @@
-package imaged
+package storage
 
 import (
 	"bytes"
@@ -19,10 +19,10 @@ type Storage struct {
 	Bucket string
 }
 
-// NewStorage creates a new storage object for a particular S3 bucket.
+// New creates a new storage object for a particular S3 bucket.
 //
 // The AWS credentials will be pulled from the environment.
-func NewStorage(bucket string) (*Storage, error) {
+func New(bucket string) (*Storage, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return nil, err

@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
-	"github.com/travis-ci/imaged"
 	"github.com/travis-ci/imaged/db"
 	pb "github.com/travis-ci/imaged/rpc/images"
+	"github.com/travis-ci/imaged/storage"
 	"github.com/travis-ci/imaged/worker"
 	"github.com/twitchtv/twirp"
 )
@@ -12,7 +12,7 @@ import (
 // Server handles API requests for imaged.
 type Server struct {
 	DB      *db.Connection
-	Storage *imaged.Storage
+	Storage *storage.Storage
 	Worker  *worker.Worker
 }
 
@@ -30,7 +30,7 @@ func New(c Config) (*Server, error) {
 		return nil, err
 	}
 
-	storage, err := imaged.NewStorage(c.RecordBucket)
+	storage, err := storage.New(c.RecordBucket)
 	if err != nil {
 		return nil, err
 	}
