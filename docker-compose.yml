@@ -5,6 +5,7 @@ services:
     build: .
     environment:
       IMAGED_DATABASE_URL: postgres://imaged:imaged@db/imaged?sslmode=disable
+      IMAGED_TEMPLATES_URL: https://github.com/travis-ci/packer-templates-mac.git
     env_file: .env.dev
     ports:
     - 8080:8080

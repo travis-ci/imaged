@@ -3,14 +3,15 @@ package worker
 import (
 	"context"
 	"github.com/pkg/errors"
+	"gopkg.in/src-d/go-git.v4"
 	"log"
-	"os"
 )
 
 // Worker waits for and runs a single Packer build at a time.
 type Worker struct {
 	jobs   chan Job
 	config Config
+	repo   *git.Repository
 }
 
 // Config contains options for configuring a new Worker.
@@ -25,18 +26,16 @@ type Config struct {
 
 // New creates a new worker ready to run jobs.
 func New(c Config) (*Worker, error) {
-	if c.TemplatesPath == "" {
-		return nil, errors.New("a templates path is required when creating a worker")
-	}
-
-	if _, err := os.Stat(c.TemplatesPath); err != nil {
-		return nil, errors.Wrap(err, "could not access templates path")
-	}
-
-	return &Worker{
+	w := &Worker{
 		jobs:   make(chan Job),
 		config: c,
-	}, nil
+	}
+
+	if err := w.initTemplates(); err != nil {
+		return nil, err
+	}
+
+	return w, nil
 }
 
 // Send asks the worker to run a job.
@@ -64,4 +63,54 @@ func (w *Worker) Run() {
 			log.Printf("Error running job: %v", err)
 		}
 	}
+}
+
+func (w *Worker) initTemplates() error {
+	if w.config.TemplatesPath == "" {
+		return errors.New("a templates path is required when creating a worker")
+	}
+
+	r, err := git.PlainOpen(w.config.TemplatesPath)
+	if err != nil {
+		if err == git.ErrRepositoryNotExists {
+			r, err = w.cloneTemplates()
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.Wrap(err, "could not open existing templates repo")
+		}
+	}
+
+	w.repo = r
+	if err = w.updateTemplates(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (w *Worker) cloneTemplates() (*git.Repository, error) {
+	if w.config.TemplatesURL == "" {
+		return nil, errors.New("a templates URL is required when templates are not already cloned")
+	}
+
+	r, err := git.PlainClone(w.config.TemplatesPath, false, &git.CloneOptions{
+		URL: w.config.TemplatesURL,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "could not clone templates repo")
+	}
+
+	return r, nil
+}
+
+func (w *Worker) updateTemplates() error {
+	if err := w.repo.Fetch(&git.FetchOptions{RemoteName: "origin"}); err != nil {
+		if err != git.NoErrAlreadyUpToDate {
+			return errors.Wrap(err, "could not fetch latest commits for templates repo")
+		}
+	}
+
+	return nil
 }
