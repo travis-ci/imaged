@@ -74,6 +74,7 @@ func (j *Job) Execute(ctx context.Context) error {
 		return err
 	}
 
+	packerSucceeded := true
 	cmd = exec.CommandContext(ctx, j.packer(), "build", "-color=false", template)
 	cmd.Stdout = logWriter
 	cmd.Stderr = logWriter
@@ -81,6 +82,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	if err = cmd.Run(); err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			fmt.Fprintf(logWriter, "packer exited with non-zero status code: %v\n", cmd.ProcessState)
+			packerSucceeded = false
 		} else {
 			return errors.Wrap(err, "could not run Packer build")
 		}
@@ -96,7 +98,9 @@ func (j *Job) Execute(ctx context.Context) error {
 
 	j.createRecord(ctx, logRead)
 
-	j.Build.Status = db.BuildStatusSucceeded
+	if packerSucceeded {
+		j.Build.Status = db.BuildStatusSucceeded
+	}
 	log.Printf("Build %d completed", j.Build.ID)
 
 	return nil
