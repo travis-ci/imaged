@@ -6,9 +6,12 @@ services:
     environment:
       IMAGED_DATABASE_URL: postgres://imaged:imaged@db/imaged?sslmode=disable
       IMAGED_TEMPLATES_URL: https://github.com/travis-ci/packer-templates-mac.git
+      IMAGED_ANSIBLE_SECRETS_FILE: /run/secrets/ansible.yml
     env_file: .env.dev
     ports:
     - 8080:8080
+    volumes:
+    - "./secrets:/run/secrets"
     networks:
     - imaged
     depends_on:

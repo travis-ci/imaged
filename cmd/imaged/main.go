@@ -49,6 +49,11 @@ func main() {
 			EnvVar: "IMAGED_PACKER_PATH",
 			Value:  "/bin/packer",
 		},
+		cli.StringFlag{
+			Name:   "secrets",
+			Usage:  "local path to a file containing secrets for Linux Ansible playbooks",
+			EnvVar: "IMAGED_ANSIBLE_SECRETS_FILE",
+		},
 	}
 
 	app.Action = Run
@@ -72,11 +77,12 @@ func Run(c *cli.Context) error {
 	}
 
 	worker, err := worker.New(worker.Config{
-		TemplatesPath: c.String("templates-path"),
-		TemplatesURL:  c.String("templates-url"),
-		Packer:        c.String("packer"),
-		DB:            db,
-		Storage:       storage,
+		TemplatesPath:      c.String("templates-path"),
+		TemplatesURL:       c.String("templates-url"),
+		Packer:             c.String("packer"),
+		AnsibleSecretsFile: c.String("secrets"),
+		DB:                 db,
+		Storage:            storage,
 	})
 	if err != nil {
 		return err

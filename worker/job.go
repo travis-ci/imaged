@@ -10,6 +10,7 @@ import (
 	"github.com/travis-ci/imaged/storage"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -60,6 +61,10 @@ func (j *Job) Execute(ctx context.Context) error {
 
 	logWriter := bufio.NewWriter(logFile)
 	defer logWriter.Flush()
+
+	if err := j.installSecrets(ctx); err != nil {
+		return err
+	}
 
 	cmd := exec.CommandContext(ctx, j.packer(), "version")
 	cmd.Stdout = logWriter
@@ -185,6 +190,31 @@ func (j *Job) convertTemplateToJSON() (string, error) {
 	}
 
 	return jsonPath, nil
+}
+
+func (j *Job) installSecrets(ctx context.Context) error {
+	srcPath := j.worker.config.AnsibleSecretsFile
+	destPath := filepath.Join(j.templatesDir(), "linux_playbooks", "secrets.yml")
+
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return errors.Wrap(err, "could not open secrets file")
+	}
+	defer src.Close()
+
+	dest, err := os.Create(destPath)
+	if err != nil {
+		return errors.Wrap(err, "could not create new secrets file")
+	}
+	defer dest.Close()
+
+	if _, err = io.Copy(dest, src); err != nil {
+		return errors.Wrap(err, "could not copy secrets file contents")
+	}
+
+	dest.Sync()
+
+	return nil
 }
 
 func (j *Job) createRecord(ctx context.Context, f *os.File) (*db.Record, error) {

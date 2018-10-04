@@ -24,6 +24,8 @@ type Config struct {
 	TemplatesURL string
 	// Packer is the path to the Packer executable.
 	Packer string
+	// AnsibleSecretsFile is the path to a YAML file including secrets for use in Ansible during the builds.
+	AnsibleSecretsFile string
 	// DB is the database connection jobs should use.
 	DB *db.Connection
 	// Storage is the storage jobs should use to upload records.
