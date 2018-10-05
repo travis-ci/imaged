@@ -79,8 +79,13 @@ func (j *Job) Execute(ctx context.Context) error {
 		return err
 	}
 
+	recordsDir := filepath.Join(dir, "records")
+	if err = os.Mkdir(recordsDir, 0777); err != nil {
+		return err
+	}
+
 	packerSucceeded := true
-	cmd = exec.CommandContext(ctx, j.packer(), "build", "-color=false", template)
+	cmd = exec.CommandContext(ctx, j.packer(), "build", "-color=false", "-var", "records_path="+recordsDir, template)
 	cmd.Stdout = logWriter
 	cmd.Stderr = logWriter
 	cmd.Dir = j.templatesDir()
@@ -95,13 +100,9 @@ func (j *Job) Execute(ctx context.Context) error {
 	logWriter.Flush()
 	logFile.Sync()
 
-	logRead, err := os.Open(logFile.Name())
-	if err != nil {
-		return errors.Wrap(err, "could not open log file for reading")
+	if err = j.createRecords(ctx, recordsDir); err != nil {
+		return err
 	}
-	defer logRead.Close()
-
-	j.createRecord(ctx, logRead)
 
 	if packerSucceeded {
 		j.Build.Status = db.BuildStatusSucceeded
@@ -214,6 +215,33 @@ func (j *Job) installSecrets(ctx context.Context) error {
 
 	dest.Sync()
 
+	return nil
+}
+
+func (j *Job) createRecords(ctx context.Context, recordsDir string) error {
+	records, err := ioutil.ReadDir(recordsDir)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range records {
+		path := filepath.Join(recordsDir, f.Name())
+		file, err := os.Open(path)
+		if err != nil {
+			return errors.Wrap(err, "could not open record file upload")
+		}
+		defer file.Close()
+
+		j.createRecord(ctx, file)
+	}
+
+	logRead, err := os.Open(j.log.Name())
+	if err != nil {
+		return errors.Wrap(err, "could not open log file for reading")
+	}
+	defer logRead.Close()
+
+	j.createRecord(ctx, logRead)
 	return nil
 }
 
