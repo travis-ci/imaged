@@ -3,7 +3,6 @@ package worker
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -42,15 +41,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	j.Build.Status = db.BuildStatusFailed
 	defer j.db().FinishBuild(ctx, j.Build)
 
-	rev, err := j.resetRepository(ctx)
-	if err != nil {
-		return err
-	}
-	l.WithField("resolved", rev).Info("checked out templates")
-
-	j.Build.FullRevision = &rev
-	j.db().UpdateBuild(ctx, j.Build)
-
+	// Prepare the output directory and build log
 	dir, err := ioutil.TempDir("", "imaged-build")
 	if err != nil {
 		return errors.Wrap(err, "could not create build output directory")
@@ -70,10 +61,25 @@ func (j *Job) Execute(ctx context.Context) error {
 	logWriter := bufio.NewWriter(logFile)
 	defer logWriter.Flush()
 
+	// Write logger output to both stdout and the build log file
+	log.SetOutput(io.MultiWriter(os.Stdout, logWriter))
+	defer log.SetOutput(os.Stdout)
+
+	// Put the templates repository in a clean state at the right revision
+	rev, err := j.resetRepository(ctx)
+	if err != nil {
+		return err
+	}
+	l.WithField("resolved", rev).Info("checked out templates")
+
+	j.Build.FullRevision = &rev
+	j.db().UpdateBuild(ctx, j.Build)
+
+	// Install secrets where Ansible can pick them up
 	if err := j.installSecrets(ctx); err != nil {
 		return err
 	}
-	l.Info("installed secrets file")
+	l.Debug("installed secrets file")
 
 	cmd := exec.CommandContext(ctx, j.packer(), "version")
 	cmd.Stdout = logWriter
@@ -103,8 +109,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	cmd.Dir = j.templatesDir()
 	if err = cmd.Run(); err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			fmt.Fprintf(logWriter, "packer exited with non-zero status code: %v\n", cmd.ProcessState)
-			l.WithError(err).Info("packer build failed")
+			l.WithError(err).Error("packer build failed")
 			packerSucceeded = false
 		} else {
 			return errors.Wrap(err, "could not run Packer build")
