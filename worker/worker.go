@@ -3,10 +3,10 @@ package worker
 import (
 	"context"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/travis-ci/imaged/db"
 	"github.com/travis-ci/imaged/storage"
 	"gopkg.in/src-d/go-git.v4"
-	"log"
 )
 
 // Worker waits for and runs a single Packer build at a time.
@@ -68,7 +68,7 @@ func (w *Worker) Run() {
 		ctx := context.Background()
 
 		if err := j.Execute(ctx); err != nil {
-			log.Printf("Error running job: %v", err)
+			log.WithField("build_id", j.Build.ID).WithError(err).Error("build failed")
 		}
 	}
 }

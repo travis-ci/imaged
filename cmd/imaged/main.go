@@ -1,13 +1,13 @@
 package main
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/travis-ci/imaged/db"
 	rpc "github.com/travis-ci/imaged/rpc/images"
 	"github.com/travis-ci/imaged/server"
 	"github.com/travis-ci/imaged/storage"
 	"github.com/travis-ci/imaged/worker"
 	"github.com/urfave/cli"
-	"log"
 	"net/http"
 	"os"
 )
@@ -17,6 +17,11 @@ func main() {
 	app.Name = "imaged"
 	app.Description = "build Packer images at your request"
 	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:   "debug",
+			Usage:  "enable debug logging",
+			EnvVar: "IMAGED_DEBUG",
+		},
 		cli.BoolTFlag{
 			Name:   "migrate",
 			Usage:  "run database migrations before starting the server",
@@ -60,19 +65,26 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("imaged failed to start")
 	}
 }
 
 // Run starts the imaged server listening for API requests.
 func Run(c *cli.Context) error {
+	if c.Bool("debug") {
+		log.SetLevel(log.DebugLevel)
+	}
+
 	db, err := db.NewConnection(c.String("database"))
 	if err != nil {
+		log.WithError(err).Error("could not connect to database")
 		return err
 	}
 
-	storage, err := storage.New(c.String("bucket"))
+	bucket := c.String("bucket")
+	storage, err := storage.New(bucket)
 	if err != nil {
+		log.WithField("bucket", bucket).WithError(err).Error("could not connect to S3")
 		return err
 	}
 
@@ -85,10 +97,12 @@ func Run(c *cli.Context) error {
 		Storage:            storage,
 	})
 	if err != nil {
+		log.WithError(err).Error("could not create worker")
 		return err
 	}
 
 	go worker.Run()
+	log.Debug("started worker")
 
 	server := &server.Server{
 		DB:      db,
@@ -98,10 +112,16 @@ func Run(c *cli.Context) error {
 
 	if c.Bool("migrate") {
 		if err = db.Migrate(); err != nil {
+			log.WithError(err).Error("failed to migrate database")
 			return err
 		}
+
+		log.Debug("database migration succeeded")
+	} else {
+		log.Debug("skipped database migration")
 	}
 
+	log.Info("starting RPC server")
 	handler := rpc.NewImagesServer(server, nil)
 	return http.ListenAndServe(":8080", handler)
 }

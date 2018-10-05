@@ -129,6 +129,14 @@
   version = "0.5"
 
 [[projects]]
+  digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
   name = "github.com/lib/pq"
   packages = [
@@ -170,6 +178,14 @@
   pruneopts = "UT"
   revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:dc2d85c13ac22c22a1f3170a41a8e1b897fa05134aaf533f16df44f66a25b4a1"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:3681df693b35e7df9937dbd54b9f179aee5b54f4a28f72ad191e87038e6ffcab"
@@ -214,7 +230,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b861552565bbae366636c643bfb1c6fc18123fa632cc78ec8bdef3341642170a"
+  digest = "1:f92faad56a4e7a4b9b39386d4ecba32eb6b348a05ec0fbbf53018b6692691933"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -233,6 +249,7 @@
     "ssh",
     "ssh/agent",
     "ssh/knownhosts",
+    "ssh/terminal",
   ]
   pruneopts = "UT"
   revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
@@ -247,9 +264,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:68a4638398cf8c864a6aa50c8853ebe7935f939aa3acf7e44cb35b67852e9fef"
+  digest = "1:6f82ed211591ecb407897ca46ff6149d618223088aecad72675804f106033629"
   name = "golang.org/x/sys"
-  packages = ["windows"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "UT"
   revision = "e4b3c5e9061176387e7cea65e4dc5853801f3fb7"
 
@@ -362,10 +382,12 @@
     "github.com/jmoiron/sqlx",
     "github.com/lib/pq",
     "github.com/pkg/errors",
+    "github.com/sirupsen/logrus",
     "github.com/twitchtv/twirp",
     "github.com/twitchtv/twirp/ctxsetters",
     "github.com/urfave/cli",
     "gopkg.in/src-d/go-git.v4",
+    "gopkg.in/src-d/go-git.v4/plumbing",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

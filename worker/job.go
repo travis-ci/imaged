@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/travis-ci/imaged/db"
 	"github.com/travis-ci/imaged/storage"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,8 +29,14 @@ type Job struct {
 
 // Execute runs a single job.
 func (j *Job) Execute(ctx context.Context) error {
-	log.Printf("Build %d: building template '%s' at revision '%s'", j.Build.ID, j.Build.Name, j.Build.Revision)
 	j.db().StartBuild(ctx, j.Build)
+
+	l := log.WithFields(log.Fields{
+		"build_id": j.Build.ID,
+		"name":     j.Build.Name,
+		"revision": j.Build.Revision,
+	})
+	l.Info("started build")
 
 	// Assume the build fails unless we get to the end and mark it successful
 	j.Build.Status = db.BuildStatusFailed
@@ -40,8 +46,8 @@ func (j *Job) Execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	l.WithField("resolved", rev).Info("checked out templates")
 
-	log.Printf("Build %d: checked out revision %s", j.Build.ID, rev)
 	j.Build.FullRevision = &rev
 	j.db().UpdateBuild(ctx, j.Build)
 
@@ -51,6 +57,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	}
 	j.outputDir = dir
 	defer os.RemoveAll(dir)
+	l.WithField("out_dir", dir).Debug("created build output directory")
 
 	logFile, err := os.Create(j.outputFile("build.log"))
 	if err != nil {
@@ -58,6 +65,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	}
 	j.log = logFile
 	defer logFile.Close()
+	l.Debug("created build log")
 
 	logWriter := bufio.NewWriter(logFile)
 	defer logWriter.Flush()
@@ -65,6 +73,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	if err := j.installSecrets(ctx); err != nil {
 		return err
 	}
+	l.Info("installed secrets file")
 
 	cmd := exec.CommandContext(ctx, j.packer(), "version")
 	cmd.Stdout = logWriter
@@ -73,16 +82,19 @@ func (j *Job) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "could not print Packer version")
 	}
 	logWriter.Flush()
+	l.Debug("printed packer version")
 
 	template, err := j.convertTemplateToJSON()
 	if err != nil {
 		return err
 	}
+	l.Debug("converted template from YAML to JSON")
 
 	recordsDir := filepath.Join(dir, "records")
 	if err = os.Mkdir(recordsDir, 0777); err != nil {
 		return err
 	}
+	l.WithField("records_path", recordsDir).Debug("created custom records directory")
 
 	packerSucceeded := true
 	cmd = exec.CommandContext(ctx, j.packer(), "build", "-color=false", "-var", "records_path="+recordsDir, template)
@@ -92,22 +104,25 @@ func (j *Job) Execute(ctx context.Context) error {
 	if err = cmd.Run(); err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			fmt.Fprintf(logWriter, "packer exited with non-zero status code: %v\n", cmd.ProcessState)
+			l.WithError(err).Info("packer build failed")
 			packerSucceeded = false
 		} else {
 			return errors.Wrap(err, "could not run Packer build")
 		}
+	} else {
+		l.Info("packer build succeeded")
 	}
 	logWriter.Flush()
 	logFile.Sync()
 
-	if err = j.createRecords(ctx, recordsDir); err != nil {
+	if err = j.createRecords(ctx, l, recordsDir); err != nil {
 		return err
 	}
 
 	if packerSucceeded {
 		j.Build.Status = db.BuildStatusSucceeded
 	}
-	log.Printf("Build %d completed", j.Build.ID)
+	l.WithField("status", j.Build.Status).Info("build finished")
 
 	return nil
 }
@@ -218,13 +233,15 @@ func (j *Job) installSecrets(ctx context.Context) error {
 	return nil
 }
 
-func (j *Job) createRecords(ctx context.Context, recordsDir string) error {
+func (j *Job) createRecords(ctx context.Context, l *log.Entry, recordsDir string) error {
 	records, err := ioutil.ReadDir(recordsDir)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range records {
+		rlog := l.WithField("file", f.Name())
+
 		path := filepath.Join(recordsDir, f.Name())
 		file, err := os.Open(path)
 		if err != nil {
@@ -232,7 +249,11 @@ func (j *Job) createRecords(ctx context.Context, recordsDir string) error {
 		}
 		defer file.Close()
 
-		j.createRecord(ctx, file)
+		if r, err := j.createRecord(ctx, file); err != nil {
+			rlog.WithError(err).Error("failed to upload record")
+		} else {
+			rlog.WithField("record_id", r.ID).Info("uploaded record")
+		}
 	}
 
 	logRead, err := os.Open(j.log.Name())
@@ -241,7 +262,11 @@ func (j *Job) createRecords(ctx context.Context, recordsDir string) error {
 	}
 	defer logRead.Close()
 
-	j.createRecord(ctx, logRead)
+	if r, err := j.createRecord(ctx, logRead); err != nil {
+		l.WithError(err).Error("failed to upload build log")
+	} else {
+		l.WithField("record_id", r.ID).Info("uploaded build log")
+	}
 	return nil
 }
 
