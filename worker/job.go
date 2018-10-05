@@ -5,7 +5,7 @@ import (
 	"context"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/travis-ci/imaged/db"
 	"github.com/travis-ci/imaged/storage"
 	"gopkg.in/src-d/go-git.v4"
@@ -28,9 +28,15 @@ type Job struct {
 
 // Execute runs a single job.
 func (j *Job) Execute(ctx context.Context) error {
+	// Avoid the global logger so that we can direct these messages to the build log
+	// If we used the global logger, then request logs would also go in the build log
+	// if they happened during a job.
+	log := logrus.New()
+	log.SetLevel(logrus.GetLevel())
+
 	j.db().StartBuild(ctx, j.Build)
 
-	l := log.WithFields(log.Fields{
+	l := log.WithFields(logrus.Fields{
 		"build_id": j.Build.ID,
 		"name":     j.Build.Name,
 		"revision": j.Build.Revision,
@@ -62,8 +68,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	defer logWriter.Flush()
 
 	// Write logger output to both stdout and the build log file
-	log.SetOutput(io.MultiWriter(os.Stdout, logWriter))
-	defer log.SetOutput(os.Stdout)
+	log.Out = io.MultiWriter(os.Stdout, logWriter)
 
 	// Put the templates repository in a clean state at the right revision
 	rev, err := j.resetRepository(ctx)
@@ -239,7 +244,7 @@ func (j *Job) installSecrets(ctx context.Context) error {
 	return nil
 }
 
-func (j *Job) createRecords(ctx context.Context, l *log.Entry, recordsDir string) error {
+func (j *Job) createRecords(ctx context.Context, l *logrus.Entry, recordsDir string) error {
 	records, err := ioutil.ReadDir(recordsDir)
 	if err != nil {
 		return err

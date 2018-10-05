@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"github.com/travis-ci/imaged/db"
 	rpc "github.com/travis-ci/imaged/rpc/images"
 	"github.com/travis-ci/imaged/server"
 	"github.com/travis-ci/imaged/storage"
 	"github.com/travis-ci/imaged/worker"
+	"github.com/twitchtv/twirp"
 	"github.com/urfave/cli"
 	"net/http"
 	"os"
@@ -122,6 +124,17 @@ func Run(c *cli.Context) error {
 	}
 
 	log.Info("starting RPC server")
-	handler := rpc.NewImagesServer(server, nil)
+	handler := rpc.NewImagesServer(server, &twirp.ServerHooks{
+		ResponseSent: handleResponseSent,
+	})
 	return http.ListenAndServe(":8080", handler)
+}
+
+func handleResponseSent(ctx context.Context) {
+	method, _ := twirp.MethodName(ctx)
+	status, _ := twirp.StatusCode(ctx)
+	log.WithFields(log.Fields{
+		"method": method,
+		"code":   status,
+	}).Info("response sent")
 }
