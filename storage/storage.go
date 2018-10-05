@@ -45,9 +45,10 @@ func New(bucket string) (*Storage, error) {
 // Upload uploads data from a reader to S3.
 func (s *Storage) Upload(ctx context.Context, key string, r io.Reader) (string, error) {
 	input := &s3manager.UploadInput{
-		Bucket: &s.Bucket,
-		Key:    &key,
-		Body:   r,
+		Bucket:      &s.Bucket,
+		Key:         &key,
+		Body:        r,
+		ContentType: aws.String("text/plain"),
 	}
 	result, err := s.uploader.UploadWithContext(ctx, input)
 	if err != nil {
