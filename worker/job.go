@@ -102,6 +102,7 @@ func (j *Job) Execute(ctx context.Context) error {
 	}
 	l.WithField("records_path", recordsDir).Debug("created custom records directory")
 
+	l.Info("starting packer build")
 	packerSucceeded := true
 	cmd = exec.CommandContext(ctx, j.packer(), "build", "-color=false", "-var", "records_path="+recordsDir, template)
 	cmd.Stdout = logWriter
