@@ -47,6 +47,20 @@ func (s *Server) StartBuild(ctx context.Context, req *pb.StartBuildRequest) (*pb
 	return resp, nil
 }
 
+// GetBuild gets the details about a particular build.
+func (s *Server) GetBuild(ctx context.Context, req *pb.GetBuildRequest) (*pb.GetBuildResponse, error) {
+	build, err := s.DB.GetBuildFull(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &pb.GetBuildResponse{
+		Build: build.Message(),
+	}
+
+	return resp, nil
+}
+
 // DownloadRecord downloads the file contents of a build record from S3.
 func (s *Server) DownloadRecord(ctx context.Context, req *pb.DownloadRecordRequest) (*pb.DownloadRecordResponse, error) {
 	r, err := s.DB.GetRecord(ctx, req.Id)

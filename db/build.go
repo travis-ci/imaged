@@ -34,6 +34,7 @@ type Build struct {
 	CreatedAt    time.Time  `db:"created_at"`
 	StartedAt    *time.Time `db:"started_at"`
 	FinishedAt   *time.Time `db:"finished_at"`
+	Records      []Record
 }
 
 // Message converts the build into a protobuf message.
@@ -51,7 +52,7 @@ func (b *Build) Message() *pb.Build {
 		finish = b.FinishedAt.Unix()
 	}
 
-	return &pb.Build{
+	msg := &pb.Build{
 		Id:           b.ID,
 		Name:         b.Name,
 		Revision:     b.Revision,
@@ -61,6 +62,10 @@ func (b *Build) Message() *pb.Build {
 		StartedAt:    start,
 		FinishedAt:   finish,
 	}
+	for _, r := range b.Records {
+		msg.Records = append(msg.Records, r.Message())
+	}
+	return msg
 }
 
 // RecordKey generates an S3 key for storing a build record for this build.
@@ -86,6 +91,20 @@ func (db *Connection) GetBuild(ctx context.Context, id int64) (*Build, error) {
 	}
 
 	return &build, nil
+}
+
+// GetBuildFull retreives a build by ID, and its attached records.
+func (db *Connection) GetBuildFull(ctx context.Context, id int64) (*Build, error) {
+	build, err := db.GetBuild(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Select(&build.Records, "SELECT * FROM records WHERE build_id = $1", id); err != nil {
+		return nil, err
+	}
+
+	return build, nil
 }
 
 // CreateBuild records a new build that was just requested.

@@ -5,6 +5,7 @@ option go_package = "images";
 
 service Images {
   rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse);
+  rpc GetBuild(GetBuildRequest) returns (GetBuildResponse);
   rpc StartBuild(StartBuildRequest) returns (StartBuildResponse);
 
   rpc DownloadRecord(DownloadRecordRequest) returns (DownloadRecordResponse);
@@ -17,6 +18,14 @@ message ListBuildsRequest {
 
 message ListBuildsResponse {
   repeated Build  builds  = 1;
+}
+
+message GetBuildRequest {
+  int64  id  = 1;
+}
+
+message GetBuildResponse {
+  Build  build  = 1;
 }
 
 message StartBuildRequest {
@@ -70,14 +79,15 @@ message Build {
     FAILED     = 3;
   }
 
-  int64   id             = 1;
-  string  name           = 2;
-  string  revision       = 3;
-  string  full_revision  = 4;
-  Status  status         = 5;
-  int64   created_at     = 6;
-  int64   started_at     = 7;
-  int64   finished_at    = 8;
+           int64   id             = 1;
+           string  name           = 2;
+           string  revision       = 3;
+           string  full_revision  = 4;
+           Status  status         = 5;
+           int64   created_at     = 6;
+           int64   started_at     = 7;
+           int64   finished_at    = 8;
+  repeated Record  records        = 9;
 }
 
 message Record {
