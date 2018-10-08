@@ -6,6 +6,7 @@ option go_package = "images";
 service Images {
   rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse);
   rpc GetBuild(GetBuildRequest) returns (GetBuildResponse);
+  rpc GetLastBuild(GetLastBuildRequest) returns (GetLastBuildResponse);
   rpc StartBuild(StartBuildRequest) returns (StartBuildResponse);
 
   rpc DownloadRecord(DownloadRecordRequest) returns (DownloadRecordResponse);
@@ -25,6 +26,14 @@ message GetBuildRequest {
 }
 
 message GetBuildResponse {
+  Build  build  = 1;
+}
+
+message GetLastBuildRequest {
+  string  name  = 1;
+}
+
+message GetLastBuildResponse {
   Build  build  = 1;
 }
 

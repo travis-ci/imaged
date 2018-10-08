@@ -31,6 +31,38 @@ func (s *Server) ListBuilds(ctx context.Context, req *pb.ListBuildsRequest) (*pb
 	return resp, nil
 }
 
+// GetBuild gets the details about a particular build.
+func (s *Server) GetBuild(ctx context.Context, req *pb.GetBuildRequest) (*pb.GetBuildResponse, error) {
+	build, err := s.DB.GetBuildFull(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &pb.GetBuildResponse{
+		Build: build.Message(),
+	}
+
+	return resp, nil
+}
+
+// GetLastBuild gets the most recent build for an image template.
+func (s *Server) GetLastBuild(ctx context.Context, req *pb.GetLastBuildRequest) (*pb.GetLastBuildResponse, error) {
+	build, err := s.DB.LastBuild(ctx, req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if build == nil {
+		return nil, twirp.NotFoundError("template " + req.Name + " does not have any builds yet")
+	}
+
+	resp := &pb.GetLastBuildResponse{
+		Build: build.Message(),
+	}
+
+	return resp, nil
+}
+
 // StartBuild creates a new build and begins running it.
 func (s *Server) StartBuild(ctx context.Context, req *pb.StartBuildRequest) (*pb.StartBuildResponse, error) {
 	build, err := s.DB.CreateBuild(ctx, req.Name, req.Revision)
@@ -41,20 +73,6 @@ func (s *Server) StartBuild(ctx context.Context, req *pb.StartBuildRequest) (*pb
 	s.Worker.Send(worker.Job{Build: build})
 
 	resp := &pb.StartBuildResponse{
-		Build: build.Message(),
-	}
-
-	return resp, nil
-}
-
-// GetBuild gets the details about a particular build.
-func (s *Server) GetBuild(ctx context.Context, req *pb.GetBuildRequest) (*pb.GetBuildResponse, error) {
-	build, err := s.DB.GetBuildFull(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &pb.GetBuildResponse{
 		Build: build.Message(),
 	}
 

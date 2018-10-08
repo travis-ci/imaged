@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"github.com/pkg/errors"
 	pb "github.com/travis-ci/imaged/rpc/images"
@@ -105,6 +106,20 @@ func (db *Connection) GetBuildFull(ctx context.Context, id int64) (*Build, error
 	}
 
 	return build, nil
+}
+
+// LastBuild returns the most recent build of a particular image template.
+func (db *Connection) LastBuild(ctx context.Context, name string) (*Build, error) {
+	var build Build
+	if err := db.Get(&build, "SELECT * FROM builds WHERE name = $1 ORDER BY created_at DESC LIMIT 1", name); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return &build, nil
 }
 
 // CreateBuild records a new build that was just requested.
