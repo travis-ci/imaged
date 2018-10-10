@@ -52,6 +52,13 @@ message StartBuildResponse {
 message DownloadRecordRequest {
   // The ID of the record to download.
   int64  id  = 1;
+
+  // or:
+
+  // The ID of the build for the record.
+  int64   build_id   = 2;
+  // The file name of the record.
+  string  file_name  = 3;
 }
 
 message DownloadRecordResponse {
@@ -61,7 +68,14 @@ message DownloadRecordResponse {
 
 message GetRecordURLRequest {
   // The ID of the record to get a download URL for.
-  int64  id  = 1;
+  int64   id         = 1;
+
+  // or:
+
+  // The ID of the build for the record.
+  int64   build_id   = 2;
+  // The file name of the record.
+  string  file_name  = 3;
 }
 
 message GetRecordURLResponse {

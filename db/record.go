@@ -34,6 +34,16 @@ func (db *Connection) GetRecord(ctx context.Context, id int64) (*Record, error) 
 	return &record, nil
 }
 
+// GetRecordNamed retrieves a build record by file name and build ID.
+func (db *Connection) GetRecordNamed(ctx context.Context, buildID int64, fileName string) (*Record, error) {
+	var record Record
+	if err := db.Get(&record, "SELECT * FROM records WHERE build_id = $1 AND filename = $2", buildID, fileName); err != nil {
+		return nil, err
+	}
+
+	return &record, nil
+}
+
 // CreateRecord records a new build record that has already been uploaded to S3.
 func (db *Connection) CreateRecord(ctx context.Context, build *Build, filename string, s3key string) (*Record, error) {
 	var id int64

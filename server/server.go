@@ -81,7 +81,7 @@ func (s *Server) StartBuild(ctx context.Context, req *pb.StartBuildRequest) (*pb
 
 // DownloadRecord downloads the file contents of a build record from S3.
 func (s *Server) DownloadRecord(ctx context.Context, req *pb.DownloadRecordRequest) (*pb.DownloadRecordResponse, error) {
-	r, err := s.DB.GetRecord(ctx, req.Id)
+	r, err := s.fetchRecord(ctx, req.Id, req.BuildId, req.FileName)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *Server) DownloadRecord(ctx context.Context, req *pb.DownloadRecordReque
 
 // GetRecordURL creates a temporary public URL for downloading the build record.
 func (s *Server) GetRecordURL(ctx context.Context, req *pb.GetRecordURLRequest) (*pb.GetRecordURLResponse, error) {
-	r, err := s.DB.GetRecord(ctx, req.Id)
+	r, err := s.fetchRecord(ctx, req.Id, req.BuildId, req.FileName)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +115,14 @@ func (s *Server) GetRecordURL(ctx context.Context, req *pb.GetRecordURLRequest) 
 	}
 
 	return resp, nil
+}
+
+func (s *Server) fetchRecord(ctx context.Context, id int64, buildID int64, fileName string) (*db.Record, error) {
+	if id == 0 {
+		return s.DB.GetRecordNamed(ctx, buildID, fileName)
+	}
+
+	return s.DB.GetRecord(ctx, id)
 }
 
 // AttachRecord creates a new build record based on a file that was generated during the build.
