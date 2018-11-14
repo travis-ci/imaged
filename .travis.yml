@@ -1,4 +1,3 @@
-sudo: true
 language: go
 go: "1.11"
 services:
@@ -10,11 +9,12 @@ install: true # don't `go get` a bunch of junk, we'll get it with dep
 script:
   #  - dep ensure -vendor-only
   #  - go test
-  - docker build -t travisci/imaged .
+  - bin/docker-build
 deploy:
   provider: script
   script: bin/docker-push
   on:
-    branch: master
+    repo: travis-ci/imaged
+    all_branches: true
 notifications:
   email: false
